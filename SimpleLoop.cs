@@ -53,9 +53,6 @@ namespace ConsoleApp1
                         throw new Exception("Something Bad Happened");
                     }
                 }
-
-
-                throw new NotImplementedException();
             }
         }
 
