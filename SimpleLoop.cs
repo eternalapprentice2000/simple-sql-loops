@@ -60,56 +60,64 @@ namespace ConsoleApp1
         }
 
         static void Main(string[] args)
+        {
+            var isQueryComplete = true;
+
+            // loop condition
+            var loopCounter = 10; // 
+            var locker = new object();
+
+            while (loopCounter > 0)
             {
-                var isQueryComplete = true;
+                loopCounter--; //decrease by one
 
-                // loop condition
-                var loopCounter = 10; // 
-
-                while (loopCounter > 0)
+                if (isQueryComplete)
                 {
-                    loopCounter--; //decrease by one
 
-                    if (isQueryComplete)
+                    lock (locker)
                     {
                         isQueryComplete = false;
-                        Console.WriteLine("Starting Query");
-                        var task = GetSqlQuery((dataReader) =>
-                                    {
+                    }
+                    
+                    Console.WriteLine("Starting Query");
+                    var task = GetSqlQuery((dataReader) =>
+                                {
+                                    // THIS IS THE CALLBACK
                                     // this is what happens after the query is complete
                                     // get the result with data reader
 
                                     var results = new List<QueryResult>();
 
-                                        while (dataReader.Read())
+                                    while (dataReader.Read())
+                                    {
+                                        Console.WriteLine("Found Results");
+                                        results.Add(new QueryResult
                                         {
-                                            Console.WriteLine("Found Results");
-                                            results.Add(new QueryResult
-                                            {
-                                                Id = dataReader.GetString(0),
-                                                Description = dataReader.GetString(1)
-                                            });
-                                        }
+                                            Id = dataReader.GetString(0),
+                                            Description = dataReader.GetString(1)
+                                        });
+                                    }
 
                                     // DO SOMETHING WITH THE RESULTS HERE
-
-                                    isQueryComplete = true;
-
+                                    lock (locker)
+                                    {
+                                        isQueryComplete = true;
+                                    }
                                     // do check to see if something went wrong
 
                                     return true;
-                                    });
-                    }
-                    else
-                    {
-                        Console.WriteLine("Skipped Query... the previous query was not complete");
-
-                    }
-
-                    Task.Delay(10 * 1000); // 10 seconds
+                                });
+                }
+                else
+                {
+                    Console.WriteLine("Skipped Query... the previous query was not complete");
 
                 }
+
+                Task.Delay(10 * 1000); // 10 seconds
+
             }
         }
     }
+}
 
